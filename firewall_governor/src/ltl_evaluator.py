@@ -286,12 +286,10 @@ class LTLEvaluator:
         Step 3 — Temporal checks (RTAMT, optional):
             If self.monitor is None, skip and return None (no temporal check).
             Otherwise:
-              - Get current time as float timestamp.
               - Encode intent as signals via _encode_intent_as_signals().
               - Call monitor.update(signals) → returns robustness degree (float).
+              - Increment self.current_step for the next call.
               - If robustness < 0: the STL formula is violated → return VETO VetoPacket.
-              - Negative robustness = the property is falsified.
-              - Positive robustness = how far the signals are from violating.
 
         Step 4 — Return None (all checks passed).
         """
@@ -315,9 +313,12 @@ class LTLEvaluator:
             return None
 
         try:
-            timestamp = time.time()
-            signals   = self._encode_intent_as_signals(intent, timestamp)
+            # Encode using the integer current_step
+            signals = self._encode_intent_as_signals(intent, self.current_step)
             robustness = self.monitor.update(signals)
+
+            # Important: Increment step counter AFTER successful update
+            self.current_step += 1
 
             if robustness < 0:
                 return VetoPacket(

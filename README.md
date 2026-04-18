@@ -92,6 +92,7 @@ npm run dev
 Detailed documentation is available in the [`/docs`](./docs) folder:
 
 - **[QUICKSTART.md](./docs/QUICKSTART.md)**: Get running in under 10 minutes.
+- **[LOCAL_TESTING.md](./docs/LOCAL_TESTING.md)**: Full scale simulation test guide.
 - **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)**: Detailed step-by-step distributed setup.
 - **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)**: High-level design and security logic.
 - **[COMPONENTS.md](./docs/COMPONENTS.md)**: File structure and component breakdown.
