@@ -1,0 +1,22 @@
+{
+  "name": "ppisec-portfolio-module",
+  "version": "1.0.0",
+  "description": "Standalone, 100% client-side React/Next.js demo of the PPISec Semantic Firewall.",
+  "private": true,
+  "dependencies": {
+    "@react-three/drei": "^9.97.0",
+    "@react-three/fiber": "^8.15.16",
+    "@xenova/transformers": "^2.14.0",
+    "framer-motion": "^11.0.3",
+    "lucide-react": "^0.331.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "three": "^0.161.0",
+    "zustand": "^4.5.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/three": "^0.184.0",
+    "typescript": "^6.0.3"
+  }
+}
