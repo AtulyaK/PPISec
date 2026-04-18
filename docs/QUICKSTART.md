@@ -51,6 +51,7 @@ npm run dev
 4. Observe the **Audit Trail** (should show Protocol::PASS) and the **3D Scene** (arm should move).
 5. Open the **Security Lab** (Bug icon) and toggle **Activate Trojan**.
 6. Issue a new command and verify the **Protocol::VETO** or **Protocol::WARN** flow.
+7. Click the **Master System Reset** (Refresh icon) to clear all backend memory and start a fresh demo.
 
 ---
 **Next Steps:**

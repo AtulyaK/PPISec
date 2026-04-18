@@ -107,6 +107,7 @@ Detailed documentation is available in the [`/docs`](./docs) folder:
 - `/firewall_governor`: Core security middleware and validation engines.
 - `/mock_environment`: Hardware-free simulation and testing harness.
 - `/docs`: Detailed design, API references, and deployment guides.
+- `/portfolio_module`: A 100% client-side, standalone version of the dashboard and engine, designed for seamless integration into personal websites (e.g., `atulyakadur.com`). Includes built-in Wasm NLP models.
 
 ## 📄 License
 This project is released under the MIT License. See [LICENSE](LICENSE) for details.
