@@ -1,11 +1,11 @@
 """
 Semantic Firewall Governor — FastAPI Server (Software-Only Mode)
 
-This is the central server that runs on the AMD MI300X cloud machine (port 8000).
+This is the central server that enforces safety policies.
 It serves as the exclusive security gateway between:
-  - The Brain (brain_cloud/task_executor.py, port 8002) which runs the VLM loop
-  - The virtual robot (SimulatorClient) which simulates the robot's physical actions
-  - Agent Glass (agent_glass/ Next.js app, port 3000) which visualizes everything
+  - The Brain (Task Executor, running locally or remotely)
+  - The virtual robot (SimulatorClient)
+  - Agent Glass (Browser UI)
 
 Endpoints:
   POST /propose_intent     — Receive a VLM-proposed action, run 4-stage firewall,

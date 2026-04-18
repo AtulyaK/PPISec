@@ -25,7 +25,7 @@ export default function Home() {
         <div className="flex items-center gap-4 text-[10px] text-slate-500">
           <span>Firewall: <span className="text-indigo-400">4-Stage Pipeline</span></span>
           <span>Model: <span className="text-indigo-400">Qwen2-VL-7B</span></span>
-          <span>GPU: <span className="text-indigo-400">AMD MI300X</span></span>
+          <span>GPU: <span className="text-indigo-400">Remote GPU Node</span></span>
         </div>
       </header>
 

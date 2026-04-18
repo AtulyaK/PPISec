@@ -1,11 +1,11 @@
-# vLLM Deployment on AMD MI300X
-FROM rocm/vllm:rocm6.3.1_mi300_ubuntu22.04_py3.12_vllm_0.6.6
+# Universal vLLM Deployment
+FROM vllm/vllm-openai:latest
 
-# Set environment variables for AMD optimized kernels
-ENV VLLM_ROCM_USE_AITER=1
-
-# Expose the OpenAI-compatible endpoint port
+# Expose vLLM port
 EXPOSE 8000
 
-# Entrypoint for serving a VLM
+# Set default model
+ENV VLLM_MODEL="Qwen/Qwen2-VL-7B-Instruct"
+
 ENTRYPOINT ["python3", "-m", "vllm.entrypoints.openai.api_server"]
+CMD ["--model", "Qwen/Qwen2-VL-7B-Instruct", "--max-model-len", "4096"]

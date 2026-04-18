@@ -167,7 +167,7 @@ class TaskExecutor:
         Called once at server startup (not per task).
 
         The client timeout covers the full VLM inference time, which can be
-        up to 30 seconds on the first request (cold prompt) on the MI300X.
+        up to 30 seconds on the first request (cold prompt) on standard cloud GPUs.
         """
         self._http = httpx.AsyncClient(timeout=60.0)
         logger.info("TaskExecutor initialized. HTTP client ready.")

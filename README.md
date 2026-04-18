@@ -87,6 +87,18 @@ npm run dev
 
 ---
 
+## 📚 Documentation
+
+Detailed documentation is available in the [`/docs`](./docs) folder:
+
+- **[QUICKSTART.md](./docs/QUICKSTART.md)**: Get running in under 10 minutes.
+- **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)**: Detailed step-by-step distributed setup.
+- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)**: High-level design and security logic.
+- **[COMPONENTS.md](./docs/COMPONENTS.md)**: File structure and component breakdown.
+- **[API_AND_POLICIES.md](./docs/API_AND_POLICIES.md)**: API schemas and rule-writing guide.
+
+---
+
 ## 📂 Repository Structure
 
 - `/agent_glass`: Next.js dashboard and 3D simulation.

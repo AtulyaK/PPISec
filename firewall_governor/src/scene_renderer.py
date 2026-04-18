@@ -16,10 +16,8 @@ Pipeline (per render call):
     5. Return the composite as a base64-encoded JPEG string ready for the VLM.
 
 Platform notes (see rendering_research.md for full analysis):
-    - M2 MacBook: PyRender runs via pyglet (windowed) or OffscreenRenderer
-      (try directly — often works). No GPU backend needed for dev.
-    - AMD GPU Cluster (RDNA): PYOPENGL_PLATFORM=egl → GPU accelerated.
-    - AMD MI300X (CDNA): PYOPENGL_PLATFORM=osmesa → CPU, ~100–500ms per render.
+    - CPU Rendering: PYOPENGL_PLATFORM=osmesa → Works on any Linux/Mac.
+    - GPU Rendering: PYOPENGL_PLATFORM=egl → Requires NVIDIA/AMD GPU drivers.
     - All render times are acceptable: /render_scene is called at most once per
       sense-plan-act step, and a step takes 3–10 seconds total anyway.
 
@@ -27,11 +25,11 @@ Environment variable:
     PYOPENGL_PLATFORM must be set BEFORE importing pyrender.
     The renderer reads this from os.environ at startup.
     Default: "osmesa" (works on any Linux, always safe fallback).
-    Set to "egl" for AMD GPU cluster hardware-accelerated rendering.
+    Set to "egl" for GPU cluster hardware-accelerated rendering.
 
     Example (in your shell or systemd unit):
         export PYOPENGL_PLATFORM=osmesa
-        # OR for AMD GPU cluster:
+        # OR for GPU cluster:
         export PYOPENGL_PLATFORM=egl
 """
 
@@ -57,7 +55,7 @@ if "PYOPENGL_PLATFORM" not in os.environ:
     os.environ["PYOPENGL_PLATFORM"] = "osmesa"
     logger.info(
         "SceneRenderer: PYOPENGL_PLATFORM not set — defaulting to 'osmesa'. "
-        "For AMD GPU cluster, set PYOPENGL_PLATFORM=egl before starting the server."
+        "For GPU cluster, set PYOPENGL_PLATFORM=egl before starting the server."
     )
 
 try:

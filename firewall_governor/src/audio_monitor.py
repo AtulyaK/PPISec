@@ -66,7 +66,7 @@ class SemanticAudioBridge:
         # Load the sentence-transformer model at init time.
         # 'all-MiniLM-L6-v2' is the standard lightweight choice:
         #   - Size: ~80MB download on first use (cached to ~/.cache/)
-        #   - Inference: ~5ms per sentence on CPU (M2 Mac or MI300X host CPU)
+        #   - Inference: ~5ms per sentence on CPU (M2 Mac or Cloud host CPU)
         #   - Quality: excellent for English semantic similarity tasks
         try:
             from sentence_transformers import SentenceTransformer
