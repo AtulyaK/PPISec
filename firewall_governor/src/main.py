@@ -64,6 +64,9 @@ _renderer:  Optional[SceneRenderer]    = None
 # Entries are added on connect and removed on disconnect or failed send.
 _ws_clients: Set[WebSocket] = set()
 
+# In-memory store for pending HITL overrides: {token: IntentPacket}
+_hitl_token_store: dict[str, IntentPacket] = {}
+
 
 async def _broadcast_telemetry(data: dict):
     """
@@ -82,6 +85,7 @@ async def _broadcast_telemetry(data: dict):
       "decision"   → firewall decision (PASS/WARN/VETO) with reason and context
       "processing" → firewall has received a request and is evaluating it
     """
+    global _ws_clients
     if not _ws_clients:
         return
     dead = set()
@@ -559,17 +563,6 @@ async def health_check():
         "ws_clients":            len(_ws_clients),
         "policy_rules_loaded":   _engine.radix_table.rule_count() if _engine else 0,
         "ltl_enabled":           _engine.config.enable_temporal_checks if _engine else False,
-        "audio_bridge_active":   _engine.audio_bridge is not None if _engine else False,
-        "pyrender_backend":      os.environ.get("PYOPENGL_PLATFORM", "osmesa"),
-        # Full robot state included for brain_cloud/_get_robot_state() to parse
-        "robot_state":           _simulator.state.to_dict() if _simulator else {},
-    }
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
-temporal_checks if _engine else False,
         "audio_bridge_active":   _engine.audio_bridge is not None if _engine else False,
         "pyrender_backend":      os.environ.get("PYOPENGL_PLATFORM", "osmesa"),
         # Full robot state included for brain_cloud/_get_robot_state() to parse

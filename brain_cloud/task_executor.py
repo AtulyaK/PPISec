@@ -19,13 +19,12 @@ Loop:
 """
 
 import asyncio
-import base64
 import json
 import os
 import time
 import uuid
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 
 import httpx
@@ -836,4 +835,3 @@ if __name__ == "__main__":
     import uvicorn
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
     uvicorn.run(brain_app, host="0.0.0.0", port=8002)
-0.0", port=8002)

@@ -21,7 +21,7 @@ class MockSO101:
         await asyncio.sleep(0.5) # Simulate travel time
         self.joints = positions
         self.is_moving = False
-        print(f"[MockSO101] Move complete.")
+        print("[MockSO101] Move complete.")
 
     async def stop(self):
         self.is_moving = False

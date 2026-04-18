@@ -37,7 +37,7 @@ import asyncio
 import logging
 import math
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable, Optional, Dict, Any, List
 
 from .models import IntentPacket

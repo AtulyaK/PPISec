@@ -39,7 +39,7 @@ import logging
 import math
 from io import BytesIO
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont

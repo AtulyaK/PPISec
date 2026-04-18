@@ -1,5 +1,4 @@
 import requests
-import json
 import time
 import sys
 
@@ -171,7 +170,7 @@ def test_firewall_roundtrip(firewall_url: str, scenario: str) -> dict:
         print(f"  ❌ Connection failed — is the Governor running at {firewall_url}?")
         return {"error": "connection_failed"}
     except requests.exceptions.Timeout:
-        print(f"  ❌ Request timed out (5s) — Governor may be overloaded.")
+        print("  ❌ Request timed out (5s) — Governor may be overloaded.")
         return {"error": "timeout"}
     except Exception as e:
         print(f"  ❌ Unexpected error: {e}")
