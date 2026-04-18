@@ -46,12 +46,11 @@ npm run dev
 
 ## 3. Immediate Verification
 1. Open the dashboard at `http://localhost:3000`.
-2. Select a scenario (e.g., Pharmacy).
-3. In the **Commands** tab, click **"Pick up bottle"**.
-4. Observe the **Audit Log** (should show PASS) and the **3D Scene** (arm should move).
-5. Switch to **Trojan Attacks** tab.
-6. Click **"🚨 Trojan: Dispose Keys"**.
-7. Observe the **Audit Log** (should show VETO or WARN).
+2. Select a deployment (e.g., Pharmacy).
+3. Type a directive like *"Pick up the bottle"* and press Enter.
+4. Observe the **Audit Trail** (should show Protocol::PASS) and the **3D Scene** (arm should move).
+5. Open the **Security Lab** (Bug icon) and toggle **Activate Trojan**.
+6. Issue a new command and verify the **Protocol::VETO** or **Protocol::WARN** flow.
 
 ---
 **Next Steps:**

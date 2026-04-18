@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { useFirewallStore, TelemetryEvent } from '../store/firewall'
+import { useFirewallStore, TelemetryEvent, ArmState } from '../store/firewall'
 
 const WS_URL = process.env.NEXT_PUBLIC_BACKEND_WS ?? 'ws://localhost:8000/ws/telemetry'
 
@@ -29,9 +29,27 @@ export function TelemetrySocket() {
         try {
           const msg = JSON.parse(ev.data as string)
 
-          if (msg.type === 'arm_state') {
-            setArmState(msg.data)
+          if (msg.type === 'arm_state' || msg.type === 'robot_state') {
+            const data = msg.data || msg.robot_state
+            if (data) setArmState(data)
           } else if (msg.type === 'decision') {
+            // Construct proposed robot state from coordinates in the message
+            let proposed: ArmState | undefined = undefined
+            if (msg.coordinates && msg.robot_state) {
+              const action = (msg.action || '').toLowerCase()
+              const isNav = ['move', 'navigate', 'go'].includes(action)
+              
+              proposed = {
+                ...msg.robot_state,
+                // If navigation, map x/y to base. If manipulation, use current base but updated arm.
+                base_x: isNav ? (msg.coordinates.x ?? msg.robot_state.base_x) : msg.robot_state.base_x,
+                base_y: isNav ? (msg.coordinates.y ?? msg.robot_state.base_y) : msg.robot_state.base_y,
+                arm_z: !isNav ? (msg.coordinates.z ?? msg.robot_state.arm_z) : msg.robot_state.arm_z,
+                last_action: msg.action,
+                last_target: msg.target,
+              }
+            }
+
             const event: TelemetryEvent = {
               id: msg.request_id ?? crypto.randomUUID(),
               timestamp: Date.now(),
@@ -42,10 +60,12 @@ export function TelemetrySocket() {
               reason: msg.reason ?? null,
               latency_ms: msg.latency_ms ?? 0,
               reasoning_trace: msg.reasoning_trace ?? '',
-              arm_state: msg.arm_state,
+              arm_state: msg.robot_state,
+              proposed_arm_state: proposed,
+              hitl_override_token: msg.hitl_override_token || null,
             }
             addEvent(event)
-            setDecision(msg.decision, msg.reason, msg.latency_ms)
+            setDecision(msg.decision, msg.reason, msg.latency_ms, proposed)
             setProcessing(false)
           } else if (msg.type === 'processing') {
             setProcessing(true)

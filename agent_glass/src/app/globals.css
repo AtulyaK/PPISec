@@ -3,22 +3,57 @@
 @tailwind utilities;
 
 :root {
-  --bg: #020817;
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  --bg: #020617;
+  --glass-bg: rgba(15, 23, 42, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-highlight: rgba(255, 255, 255, 0.05);
+
+  --pass: #10b981;
+  --warn: #f59e0b;
+  --veto: #ef4444;
+  --idle: #6366f1;
 }
 
-* {
-  box-sizing: border-box;
-}
-
-html, body {
-  height: 100%;
+body {
+  background-color: var(--bg);
+  color: #f8fafc;
+  font-family: var(--font-sans);
+  height: 100vh;
+  margin: 0;
   overflow: hidden;
-  background: var(--bg);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Thin scrollbar */
-::-webkit-scrollbar { width: 4px; }
+@layer components {
+  .glass-card {
+    @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl transition-all duration-500;
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+  }
+
+  .glass-card:hover {
+    @apply border-white/20 bg-slate-900/60;
+  }
+
+  /* Status Glowing Text */
+  .glow-pass { text-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+  .glow-warn { text-shadow: 0 0 10px rgba(245, 158, 11, 0.4); }
+  .glow-veto { text-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+  .glow-idle { text-shadow: 0 0 10px rgba(99, 102, 241, 0.4); }
+
+  .vignette {
+    @apply fixed inset-0 pointer-events-none z-40;
+    background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.4) 100%);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+/* Selection */
+::selection { background: rgba(99, 102, 241, 0.4); color: #fff; }

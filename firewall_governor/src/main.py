@@ -351,6 +351,7 @@ async def evaluate_intent(intent: IntentPacket) -> VetoPacket:
         "confidence":       intent.confidence,
         "aasl_level":       intent.aasl_target_level,
         "reasoning_trace":  intent.reasoning_trace,
+        "coordinates":      intent.coordinates,
         # Include current robot state so Agent Glass always has fresh position data
         "robot_state":      _simulator.state.to_dict() if _simulator else {},
     })
@@ -532,14 +533,14 @@ async def ws_telemetry(websocket: WebSocket):
     _ws_clients.add(websocket)
     logger.info(f"Agent Glass WebSocket connected. Active clients: {len(_ws_clients)}")
 
-    # Send the current robot state immediately so the 3D scene initializes correctly
-    if _simulator:
-        await websocket.send_text(json.dumps({
-            "type": "robot_state",
-            "data": _simulator.state.to_dict()
-        }))
-
     try:
+        # Send the current robot state immediately so the 3D scene initializes correctly
+        if _simulator:
+            await websocket.send_text(json.dumps({
+                "type": "robot_state",
+                "data": _simulator.state.to_dict()
+            }))
+
         while True:
             # Keep alive — all data is push-driven from _broadcast_telemetry()
             # The 1-second sleep prevents busy-waiting while keeping the connection open
