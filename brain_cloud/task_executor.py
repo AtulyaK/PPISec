@@ -43,8 +43,8 @@ class BrainConfig:
     vllm_base_url: str = os.getenv("VLLM_URL", "http://localhost:8001/v1")
     vllm_model_id: str = os.getenv("VLLM_MODEL", "Qwen/Qwen2-VL-7B-Instruct")
 
-    # Firewall Governor endpoint. Default: localhost:8000
-    firewall_url: str = os.getenv("FIREWALL_URL", "http://localhost:8000")
+    # Firewall Governor endpoint. Default: 127.0.0.1:8000
+    firewall_url: str = os.getenv("FIREWALL_URL", "http://127.0.0.1:8000")
 
     # Software mode: no physical camera. Scene images come from /render_scene
     software_mode: bool = True
@@ -795,9 +795,13 @@ brain_app = FastAPI(
     lifespan=lifespan
 )
 
+# Allow origins via environment variable or default to wildcard for local dev
+origins_env = os.environ.get("ALLOW_ORIGINS", "*")
+allow_origins = [origin.strip() for origin in origins_env.split(",") if origin.strip()]
+
 brain_app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
