@@ -210,6 +210,7 @@ function StatusLabel() {
 export default function Scene3D() {
   const { armState, proposedArmState, lastDecision } = useFirewallStore()
   const [camMode, setCamMode] = useState<'iso' | 'top' | 'front'>('iso')
+  const [camResetTrigger, setCamResetTrigger] = useState(0)
  
   const mainColor = 
     lastDecision === 'VETO' ? '#ef4444' :
@@ -340,11 +341,6 @@ export default function Scene3D() {
  
         <StatusLabel />
         <Sparkles count={40} scale={15} size={1} speed={0.2} opacity={0.1} color="#4f46e5" />
-      </Canvas>
-    </div>
-  )
-}
-="#4f46e5" />
       </Canvas>
     </div>
   )
