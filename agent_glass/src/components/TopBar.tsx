@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useFirewallStore, SourceModality } from '../store/firewall'
 import { SCENARIOS } from '../data/scenarios'
-import { Send, Terminal, Cpu, Globe, Zap, ShieldCheck, AlertTriangle, Ban, Activity, Radio, Eye, Scan } from 'lucide-react'
+import { Send, Terminal, Cpu, Globe, Zap, ShieldCheck, AlertTriangle, Ban, Activity, Radio, Eye, Scan, Bug, ChevronDown, X, RefreshCw } from 'lucide-react'
 
 const API_URL = process.env.NEXT_PUBLIC_BRAIN_URL ?? 'http://localhost:8002'
 
@@ -16,11 +16,15 @@ export default function TopBar() {
     lastLatencyMs, 
     activeScenario, 
     setScenario,
-    wsConnected 
+    wsConnected,
+    trojanConfig,
+    setTrojanConfig,
+    resetSystem
   } = useFirewallStore()
   
   const [command, setCommand] = useState('')
   const [modality, setModality] = useState<SourceModality>('voice_command')
+  const [showTrojanLab, setShowTrojanLab] = useState(false)
 
   async function submitCommand() {
     if (!command.trim() || isProcessing) return
@@ -32,7 +36,9 @@ export default function TopBar() {
         body: JSON.stringify({ 
           transcript: command, 
           source_modality: modality,
-          scenario: activeScenario.id
+          scenario: activeScenario.id,
+          trojan_active: trojanConfig.active,
+          sign_text: trojanConfig.text
         }),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -105,6 +111,87 @@ export default function TopBar() {
           </div>
         </div>
 
+        {/* Master System Reset */}
+        <button 
+          onClick={() => { if(confirm('INITIATE GLOBAL RESET? This will clear all audit trails and backend history.')) resetSystem() }}
+          disabled={isProcessing}
+          className="p-2 rounded-lg bg-black/20 border border-white/5 text-slate-500 hover:text-red-400 hover:border-red-400/50 hover:bg-red-400/10 transition-all group"
+          title="Master System Reset"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isProcessing ? 'animate-spin opacity-50' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
+        </button>
+
+        <div className="h-8 w-px bg-white/5" />
+
+        {/* Adversarial Lab Trigger */}
+        <div className="relative h-full flex items-center">
+          <button 
+            onClick={() => setShowTrojanLab(!showTrojanLab)}
+            className={`flex items-center gap-2 group px-3 h-full transition-all ${showTrojanLab ? 'bg-indigo-500/10' : 'hover:bg-white/5'}`}
+          >
+            <Bug className={`w-4 h-4 transition-colors ${trojanConfig.active ? 'text-amber-500 shadow-[0_0_8px_#f59e0b]' : 'text-slate-500 group-hover:text-amber-400'}`} />
+            <div className="flex flex-col items-start">
+              <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest ml-0.5">Security Lab</span>
+              <div className="flex items-center gap-1.5 leading-none">
+                <span className={`text-xs font-black transition-colors ${trojanConfig.active ? 'text-amber-400' : 'text-slate-400'}`}>
+                  {trojanConfig.active ? 'ADVERSARIAL_ACTIVE' : 'READY_DIAG'}
+                </span>
+                <ChevronDown className={`w-3 h-3 text-slate-600 transition-transform ${showTrojanLab ? 'rotate-180' : ''}`} />
+              </div>
+            </div>
+          </button>
+
+          <AnimatePresence>
+            {showTrojanLab && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                className="absolute top-full left-0 mt-2 w-72 glass-card p-4 z-[100] border-amber-500/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2 text-amber-500">
+                    <Bug className="w-4 h-4" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Adversarial_Payload_Config</span>
+                  </div>
+                  <button onClick={() => setShowTrojanLab(false)} className="text-slate-600 hover:text-white transition-colors">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-black/40 border border-white/5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Activate Trojan</span>
+                    <button 
+                      onClick={() => setTrojanConfig(!trojanConfig.active, trojanConfig.text)}
+                      className={`w-10 h-5 rounded-full relative transition-colors ${trojanConfig.active ? 'bg-amber-500 shadow-[0_0_10px_#f59e0b]' : 'bg-slate-800'}`}
+                    >
+                      <motion.div 
+                        animate={{ x: trojanConfig.active ? 20 : 0 }}
+                        className="absolute inset-y-1 left-1 w-3 h-3 bg-white rounded-full shadow-md"
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">Environmental_Sign_Injection</span>
+                    <textarea 
+                      value={trojanConfig.text}
+                      onChange={(e) => setTrojanConfig(trojanConfig.active, e.target.value)}
+                      placeholder="Enter adversarial sign text..."
+                      className="w-full h-20 bg-black/40 border border-white/5 rounded-lg p-2 text-xs font-mono text-amber-100 placeholder:text-slate-700 focus:outline-none focus:border-amber-500/50 resize-none"
+                    />
+                  </div>
+
+                  <p className="text-[9px] text-slate-500 leading-relaxed italic">
+                    Configures the visual environment to contain a "Physical Prompt Injection" sign. The Semantic Firewall must audit reasoning traces for intent hijacking.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         <div className="h-8 w-px bg-white/5" />
 
         {/* Action Input Area */}
@@ -116,7 +203,7 @@ export default function TopBar() {
               onChange={(e) => setCommand(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && submitCommand()}
               placeholder="Awaiting directive for autonomous unit..."
-              className="w-full bg-transparent border-none text-xs text-white placeholder:text-slate-600 focus:outline-none font-medium selection:bg-indigo-500/50"
+              className="w-full bg-transparent border-none text-[16px] text-white placeholder:text-slate-600 focus:outline-none font-medium selection:bg-indigo-500/50"
             />
             
             <AnimatePresence>

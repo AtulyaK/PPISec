@@ -1,71 +1,124 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import CommandPanel from '../components/CommandPanel'
+import { useFirewallStore } from '../store/firewall'
+import TopBar from '../components/TopBar'
 import AuditLog from '../components/AuditLog'
 import ArmStatePanel from '../components/ArmStatePanel'
+import { TelemetrySocket } from '../components/TelemetrySocket'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Shield, Lock, Activity, Cpu, Bell, Settings } from 'lucide-react'
 
-// Dynamic import because Three.js uses browser APIs (window, WebGL)
-const Scene3D = dynamic(() => import('../components/Scene3D'), { ssr: false })
+// Dynamic import for Three.js scene to avoid SSR issues
+const Scene3D = dynamic(() => import('../components/Scene3D'), { 
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-slate-950">
+      <div className="flex flex-col items-center gap-6">
+        <div className="relative">
+          <Activity className="w-12 h-12 text-indigo-500 animate-pulse" />
+          <div className="absolute inset-0 bg-indigo-500/20 blur-xl animate-pulse" />
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-[10px] font-black text-white uppercase tracking-[0.5em] ml-2">Initializing_Neural_Link</span>
+          <span className="text-[8px] font-mono text-slate-500 uppercase tracking-widest">Awaiting Synchronous Buffer...</span>
+        </div>
+      </div>
+    </div>
+  )
+})
 
-export default function Home() {
+export default function Dashboard() {
+  const { wsConnected } = useFirewallStore()
+
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      {/* ─── Top Bar ─────────────────────────────────────────────────── */}
-      <header className="flex-none flex items-center justify-between px-6 py-3 border-b border-slate-800 bg-slate-900/80 backdrop-blur z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center">
-            <span className="text-xs font-black text-white">SF</span>
-          </div>
-          <div>
-            <h1 className="text-sm font-bold text-white leading-none">Agent Glass</h1>
-            <p className="text-[10px] text-slate-400 leading-none mt-0.5">Semantic Firewall — StarHacks 2026</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 text-[10px] text-slate-500">
-          <span>Firewall: <span className="text-indigo-400">4-Stage Pipeline</span></span>
-          <span>Model: <span className="text-indigo-400">Qwen2-VL-7B</span></span>
-          <span>GPU: <span className="text-indigo-400">Remote GPU Node</span></span>
-        </div>
-      </header>
-
-      {/* ─── Main content ────────────────────────────────────────────── */}
-      <div className="flex flex-1 min-h-0">
-        {/* Left sidebar: Command panel */}
-        <aside className="w-72 flex-none flex flex-col border-r border-slate-800 bg-slate-900/60 p-4 overflow-y-auto">
-          <h2 className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-3">Control</h2>
-          <CommandPanel />
-        </aside>
-
-        {/* Center: 3D Viewport */}
-        <main className="flex-1 min-w-0 relative">
-          {/* Viewport labels */}
-          <div className="absolute top-3 left-3 z-10 pointer-events-none">
-            <span className="text-[10px] font-mono text-slate-600 uppercase tracking-widest">3D Workspace</span>
-          </div>
-          <div className="absolute top-3 right-3 z-10 pointer-events-none text-right">
-            <span className="text-[10px] font-mono text-slate-600">Drag to orbit · Scroll to zoom</span>
-          </div>
-          <Scene3D />
-        </main>
-
-        {/* Right sidebar: Arm state + Audit log */}
-        <aside className="w-72 flex-none flex flex-col border-l border-slate-800 bg-slate-900/60 p-4 gap-4 overflow-hidden">
-          <div className="flex-none">
-            <h2 className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-3">Arm State</h2>
-            <ArmStatePanel />
-          </div>
-          <div className="flex-1 min-h-0 flex flex-col">
-            <AuditLog />
-          </div>
-        </aside>
+    <main className="flex flex-col h-screen bg-[#020617] text-slate-200 overflow-hidden font-sans relative">
+      {/* Global Background Ambience */}
+      <div className="vignette" />
+      
+      {/* Background Ambience / Glows */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[150px] mix-blend-screen" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[150px] mix-blend-screen" />
       </div>
 
-      {/* ─── Bottom status bar ───────────────────────────────────────── */}
-      <footer className="flex-none flex items-center gap-4 px-6 py-2 border-t border-slate-800 bg-slate-900/80 text-[10px] text-slate-500">
-        <span>4-stage validation: Policy → MCR → Audio → LTL</span>
-        <span className="ml-auto">Fail-safe: any error → VETO</span>
-      </footer>
-    </div>
+      {/* Telemetry Socket - Connection logic only */}
+      <TelemetrySocket />
+
+      {/* Primary Dashboard Layout */}
+      <div className="flex-1 flex flex-col z-10 relative min-h-0">
+        {/* Navigation & Global Controls */}
+        <TopBar />
+
+        {/* Core Visualization & Surveillance Grid */}
+        <div className="flex-1 flex overflow-hidden border-t border-white/[0.03] min-h-0">
+          {/* Left Sector: Advanced Audit & Reasoning Trace */}
+          <section className="w-[450px] lg:w-[500px] h-full border-r border-white/5 bg-slate-950/20 backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
+            <AuditLog />
+            
+            {/* Sector ID Badge */}
+            <div className="absolute bottom-4 left-4 flex gap-4 pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity">
+               <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">Sector::SEC_AUDIT_01</span>
+               <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest">Node::B_SURVEILLANCE</span>
+            </div>
+          </section>
+
+          {/* Right Sector: 3D Visualization Environment */}
+          <section className="flex-1 h-full relative group">
+             <Scene3D />
+             
+             {/* Floating Telemetry HUD */}
+             <div className="absolute top-24 right-6 w-64 pointer-events-auto z-20">
+                <motion.div 
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex flex-col gap-4"
+                >
+                   <div className="flex items-center gap-2 mb-2 px-2">
+                     <Activity className="w-3.5 h-3.5 text-indigo-500" />
+                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Hardware_Telemetry</span>
+                   </div>
+                   <ArmStatePanel />
+                </motion.div>
+             </div>
+
+             {/* Surveillance Crosshair (Visual Only) */}
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 group-hover:opacity-10 transition-opacity duration-1000">
+                <div className="w-12 h-px bg-white" />
+                <div className="h-12 w-px bg-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+             </div>
+          </section>
+        </div>
+
+        {/* SOC Bottom Status Bar */}
+        <footer className="h-10 px-8 flex items-center justify-between border-t border-white/[0.05] bg-black/40 backdrop-blur-2xl">
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-2.5">
+              <Lock className="w-3.5 h-3.5 text-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Gov::AASL_L4_Cert</span>
+            </div>
+            <div className="h-4 w-px bg-white/10" />
+            <div className="flex items-center gap-2.5">
+              <Shield className="w-3.5 h-3.5 text-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Firewall::ACTIVE_MONITOR</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-10">
+             <div className="flex items-center gap-2">
+                <Bell className="w-3 h-3 text-slate-600" />
+                <span className="text-[9px] font-mono font-bold text-slate-600 uppercase tracking-widest">Alerts::00</span>
+             </div>
+             <div className="flex items-center gap-4">
+               <div className="flex items-center gap-2">
+                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
+                 <span className="text-[9px] font-black text-emerald-500/80 uppercase tracking-widest">Link_Established</span>
+               </div>
+               <Settings className="w-3.5 h-3.5 text-slate-700 hover:text-indigo-500 transition-colors cursor-pointer" />
+             </div>
+          </div>
+        </footer>
+      </div>
+    </main>
   )
 }
