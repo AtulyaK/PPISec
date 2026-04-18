@@ -70,6 +70,24 @@ The backend orchestrator (`brain_cloud/task_executor.py`) and Firewall (`firewal
 1. **Update `page.tsx` Layout:**
    - Re-integrate `ArmStatePanel.tsx` into the new layout, potentially as a floating HUD element inside the `Scene3D` container, or by expanding the `SOC Bottom Status Bar` in `page.tsx` to include live coordinates.
 
+### Gap D: 3D Camera Uncontrollable Zoom (Bug)
+**The Problem:** Over time, or during certain animations/interactions, the Three.js camera in `Scene3D.tsx` zooms in too much, making it hard for the user to understand what is going on in the environment.
+
+**Integration Plan:**
+1. **Update `Scene3D.tsx`:**
+   - Modify the `<OrbitControls>` component (from `@react-three/drei`) to enforce strict min and max zoom distances, as well as polar angle limits, preventing the camera from clipping into the floor or zooming too far into the robot.
+   - E.g., `<OrbitControls minDistance={3} maxDistance={15} minPolarAngle={0} maxPolarAngle={Math.PI / 2.1} />`
+   - Ensure any programmatic camera animations (`useFrame` lerping) respect these bounds.
+
+### Gap E: Non-Functional Reset Button (Bug)
+**The Problem:** The reset or "Return to base" button on the dashboard does not properly clear the system state.
+
+**Integration Plan:**
+1. **Update `TopBar.tsx` / `store/firewall.ts`:**
+   - Ensure the reset button calls the `POST /reset` endpoint on the Firewall (`http://localhost:8000/reset`) so the backend LTL history clears.
+   - Clear the frontend Zustand store (events array, hitlToken, reset last decision to IDLE).
+   - If resetting the physical scene, consider using the `set_scenario` endpoint to reset the robot and objects back to their spawn points.
+
 ---
 
 ## 3. Immediate Bug Fixes Applied (Reference)
