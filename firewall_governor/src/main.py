@@ -498,6 +498,17 @@ async def hitl_override(req: HITLOverrideRequest):
     return result
 
 
+@app.post("/reset")
+async def reset_firewall():
+    """
+    Resets the security engine state (clears temporal history).
+    Used by test scripts to ensure clean state between scenarios.
+    """
+    if _engine:
+        _engine.ltl_evaluator.reset()
+    return {"status": "reset_complete"}
+
+
 @app.websocket("/ws/telemetry")
 async def ws_telemetry(websocket: WebSocket):
     """

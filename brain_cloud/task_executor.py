@@ -610,6 +610,13 @@ class TaskExecutor:
           7. (VERIFY is implicit: next SENSE captures the updated scene)
         """
         logger.info(f"TaskExecutor: starting task '{transcript}' on scenario '{scenario}'")
+
+        # Step 0: Reset Firewall state to ensure clean LTL history for new task
+        try:
+            await self._http.post(f"{self.config.firewall_url}/reset", timeout=2.0)
+        except Exception as e:
+            logger.warning(f"Could not reset firewall state: {e}")
+
         self._step_count  = 0
         self._task_history = []
 

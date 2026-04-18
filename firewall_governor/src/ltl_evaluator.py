@@ -65,6 +65,9 @@ class LTLEvaluator:
         # Size the window to hold at least the longest temporal rule's lookback.
         self.history: Deque[IntentPacket] = deque(maxlen=history_window)
 
+        # Monotonically increasing step index for RTAMT discrete-time monitor.
+        self.current_step = 0
+
         # RTAMT StlDiscreteTimeSpecification instance.
         # None until _init_rtamt_monitor() succeeds. evaluate_invariants
         # checks for None before calling monitor.update().
@@ -74,6 +77,17 @@ class LTLEvaluator:
         # Each entry is a dict: {variable: str, operator: str, threshold: float}
         # These are evaluated via simple Python comparisons, not RTAMT.
         self._spatial_rules: List[dict] = []
+
+    def reset(self):
+        """
+        Resets the temporal monitor state and clears history.
+        Essential for clearing violations between unrelated tasks/tests.
+        """
+        self.history.clear()
+        self.current_step = 0
+        if self.monitor is not None:
+            self.monitor.reset()
+        logger.info("LTLEvaluator state reset.")
 
     def load_from_yaml(self, path: str, config: AASLConfig):
         """
@@ -175,23 +189,10 @@ class LTLEvaluator:
             )
             self.monitor = None
 
-    def _encode_intent_as_signals(self, intent: IntentPacket, timestamp: float) -> dict:
+    def _encode_intent_as_signals(self, intent: IntentPacket, step: int) -> dict:
         """
-        Converts an IntentPacket into RTAMT-compatible named signal dict.
-
-        RTAMT expects signals as lists of (time, value) tuples.
-        Each call to monitor.update() passes one time step.
-
-        Unknown action strings map to ID 99. Because no RTAMT rule checks for
-        action_id == 99, unknown actions pass temporal checks — this is correct
-        since the PolicyLookupTable handles unknown action blocking.
-
-        Returns:
-            {
-                'action_id':   [(timestamp, int)],
-                'z':           [(timestamp, float)],
-                'modality_id': [(timestamp, int)],
-            }
+        Converts an IntentPacket into a dictionary of signal datasets.
+        RTAMT expects: { 'var_name': [[time_index, value]] }
         """
         action_id   = ACTION_ENCODING.get(intent.action.lower(), 99)
         modality_id = MODALITY_ENCODING.get(intent.source_modality.value, 9)
@@ -202,9 +203,9 @@ class LTLEvaluator:
             z = 0.0
 
         return {
-            'action_id':   [(timestamp, float(action_id))],
-            'z':           [(timestamp, float(z))],
-            'modality_id': [(timestamp, float(modality_id))],
+            'action_id':   [[step, float(action_id)]],
+            'z':           [[step, float(z)]],
+            'modality_id': [[step, float(modality_id)]],
         }
 
     def _check_spatial_rules(self, intent: IntentPacket) -> Optional[str]:
@@ -313,9 +314,10 @@ class LTLEvaluator:
             return None
 
         try:
-            # Encode using the integer current_step
-            signals = self._encode_intent_as_signals(intent, self.current_step)
-            robustness = self.monitor.update(signals)
+            # Encode as a dataset dict with integer time steps
+            dataset = self._encode_intent_as_signals(intent, self.current_step)
+            # Pass the dataset as a single argument to update()
+            robustness = self.monitor.update(dataset)
 
             # Important: Increment step counter AFTER successful update
             self.current_step += 1

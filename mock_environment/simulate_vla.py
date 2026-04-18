@@ -193,6 +193,12 @@ def run_all_scenarios(firewall_url: str):
 
     results = {}
     for scenario in scenarios:
+        # Reset firewall state between scenarios so LTL history is clean
+        try:
+            requests.post(f"{firewall_url}/reset", timeout=2.0)
+        except:
+            pass
+
         data = test_firewall_roundtrip(firewall_url, scenario)
         results[scenario] = data.get("decision", "ERROR")
         time.sleep(0.1)  # Brief pause between requests
