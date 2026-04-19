@@ -1,12 +1,14 @@
 # Local Testing & Verification Guide (Modernized SOC)
 
+![Agent Glass Dashboard](./assets/dashboard.png)
+
 This guide explains how to run a full-scale local test of the PPISec Semantic Firewall using the high-fidelity **Agent Glass** SOC Dashboard.
 
 ---
 
 ## 1. Setup the Operational Environment
 
-You will need 4 terminal windows running the following services. Ensure you are in the repository root: `/Users/atulyakadur/Documents/Personal Code Work/Hackathons/StarHacks_04_2026`
+You will need 4 terminal windows running the following services. Ensure you are in the repository root:
 
 ### Terminal 1: Firewall Governor (Port 8000)
 Initializes the security middleware and the 3D physics environment.
@@ -81,3 +83,4 @@ npm run dev
 ## 5. UI Operational Tools
 *   **Camera Reset**: If the 3D view is uncentered, click the **Rotate (RotateCcw)** icon in the 3D HUD (top right) to restore the isometric surveillance view.
 *   **Packet Audit**: Click any log entry to view the full **Reasoning Trace** and **Packet ID** for forensic analysis.
+*   **Fast Simulation (Override)**: To skip realistic movement delays for rapid testing, enable **Fast Simulation** in the `python3 start.py` wizard (Step 3). The robot will teleport to targets instantly.

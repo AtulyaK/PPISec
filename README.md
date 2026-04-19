@@ -1,15 +1,20 @@
-# PPISec: Semantic Firewall for VLA Robotic Agents
+<div align="center">
+  <img src="./docs/assets/hero.png" alt="PPISec Hero Banner" width="100%">
 
-**Preventing Physical Prompt Injection Attacks (PPIA) through Cognitive Governance.**
+  # PPISec: Semantic Firewall for VLA Robotic Agents
 
-[![Platform Agnostic](https://img.shields.io/badge/platform-agnostic-blue.svg)](https://github.com/AtulyaK/PPISec)
-[![Status: Hackathon Prototype](https://img.shields.io/badge/status-hackathon_prototype-orange.svg)](https://github.com/AtulyaK/PPISec)
+  **Preventing Physical Prompt Injection Attacks (PPIA) through Cognitive Governance.**
 
-## Overview
+  [![Platform Agnostic](https://img.shields.io/badge/platform-agnostic-blue.svg)](https://github.com/AtulyaK/PPISec)
+  [![Status: Hackathon Prototype](https://img.shields.io/badge/status-hackathon_prototype-orange.svg)](https://github.com/AtulyaK/PPISec)
+  [![Security: AASL Evaluated](https://img.shields.io/badge/security-AASL_Compliant-success.svg)](https://github.com/AtulyaK/PPISec)
+</div>
+
+## 🌟 Overview
 
 PPISec is an AASL-compliant (Autonomous Agent Safety Layer) middleware designed to intercept and validate the semantic intent of Vision-Language-Action (VLA) robotic agents. It specifically targets **Physical Prompt Injection Attacks (PPIA)**—where an adversary manipulates a robot's behavior by placing malicious "instructions" in the physical environment (e.g., Trojan Signs, ambiguous audio, or adversarial stickers).
 
-The system acts as a **Cognitive Governor**, sitting between the "Brain" (Large Vision-Language Models) and the "Muscle" (Robot Control Systems). Every proposed action is subjected to a 4-stage security pipeline before execution.
+At its core, PPISec acts as a **Cognitive Governor**, serving as an unbypassable checkpoint between the "Brain" (Large Vision-Language Models) and the "Muscle" (Robot Control Systems). Every proposed action is subjected to a strict 4-stage, millisecond-latency security pipeline before physical execution is permitted.
 
 ---
 
@@ -27,6 +32,12 @@ The system acts as a **Cognitive Governor**, sitting between the "Brain" (Large 
 ## 🏗️ System Architecture
 
 The project is designed with a **Platform-Agnostic Distributed Architecture**, allowing components to run across local hardware and cloud providers seamlessly.
+
+<div align="center">
+  <img src="./docs/assets/dashboard.png" alt="Agent Glass SOC Dashboard" width="90%">
+  <br>
+  <em>The Agent Glass SOC Dashboard monitoring real-time VLA logic evaluation.</em>
+</div>
 
 - **Agent Glass (Frontend):** A Next.js + Three.js dashboard providing a 3D "Sandbox" for real-time visualization of the robot's state and the Firewall's decisions.
 - **Firewall Governor (Security Node):** A FastAPI-based security gateway that orchestrates the 4-stage pipeline and manages the virtual robot simulation.
@@ -93,6 +104,7 @@ Detailed documentation is available in the [`/docs`](./docs) folder:
 
 - **[QUICKSTART.md](./docs/QUICKSTART.md)**: Get running in under 10 minutes.
 - **[LOCAL_TESTING.md](./docs/LOCAL_TESTING.md)**: Full scale simulation test guide.
+- **[ON_DEVICE_VLA.md](./docs/ON_DEVICE_VLA.md)**: Guide for running real AI models locally on M2.
 - **[DEPLOYMENT.md](./docs/DEPLOYMENT.md)**: Detailed step-by-step distributed setup.
 - **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)**: High-level design and security logic.
 - **[COMPONENTS.md](./docs/COMPONENTS.md)**: File structure and component breakdown.

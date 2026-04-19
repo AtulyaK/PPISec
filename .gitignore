@@ -47,3 +47,12 @@ ENV/
 # Local cache
 .cache/
 .huggingface/
+
+# AI Models & Engines
+llama.cpp/
+models/
+
+# Excluded project files
+portfolio_module/
+scratch/
+agent_glass/public/assets/objects/*.glb

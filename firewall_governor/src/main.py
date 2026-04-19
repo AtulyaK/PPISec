@@ -433,6 +433,8 @@ async def set_scenario(req: SetScenarioRequest):
             position=obj.get("position", [0.0, 1.0, 0.9]),
             color=obj.get("color", [0.8, 0.8, 0.8]),
             label=obj.get("label", "object"),
+            model=obj.get("model"),
+            scale=obj.get("scale", 1.0),
             is_held=False,
             is_target=obj.get("is_target", False),
         )
@@ -577,8 +579,8 @@ async def health_check():
         "ltl_enabled":           _engine.config.enable_temporal_checks if _engine else False,
         "audio_bridge_active":   _engine.audio_bridge is not None if _engine else False,
         "pyrender_backend":      os.environ.get("PYOPENGL_PLATFORM", "osmesa"),
-        # Full robot state included for brain_cloud/_get_robot_state() to parse
         "robot_state":           _simulator.state.to_dict() if _simulator else {},
+        "scene_objects":         _simulator.objects if _simulator else []
     }
 
 

@@ -7,42 +7,19 @@ Get the Semantic Firewall up and running quickly. This guide assumes you have a 
 - **Node.js 18+**
 - **Docker** (for VLM serving)
 
-## 2. Infrastructure Setup
-The system is composed of three logical nodes. You can run all on one machine (localhost) or distribute them.
+## 2. Infrastructure Setup (Unified CLI)
 
-### Node A: Visual Cortex (VLM)
-Requires an NVIDIA GPU.
+The easiest way to launch the entire system is using the **Interactive Setup Wizard**. This script will walk you through environment selection, model auto-detection, and feature toggles.
+
 ```bash
-cd brain_cloud
-bash startup.sh
-# Port 8001 will be active
+python3 start.py
 ```
 
-### Node B: The Mind (Firewall + Brain)
-Runs on any CPU.
-```bash
-# Window 1: Firewall Governor
-cd firewall_governor
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-export PYOPENGL_PLATFORM=osmesa
-uvicorn src.main:app --host 0.0.0.0 --port 8000
-
-# Window 2: Brain Task Executor
-export VLLM_URL=http://localhost:8001/v1
-python3 ../brain_cloud/task_executor.py
-# Port 8002 will be active
-```
-
-### Node C: The Window (Agent Glass UI)
-Runs on your local machine.
-```bash
-cd agent_glass
-export NEXT_PUBLIC_BRAIN_URL=http://localhost:8002
-npm install
-npm run dev
-# Open http://localhost:3000
-```
+### Wizard Features:
+- **Environment:** Choose between Mock (No AI), Local (Ollama), or Cloud (vLLM).
+- **Model Auto-Detect:** If using Ollama, the script lists your locally installed models for you to pick from.
+- **Feature Toggles:** Enable/Disable the 3D Dashboard or Stage 3 Audio alignment on the fly.
+- **Automatic Cleanup:** Pressing `Ctrl+C` once will gracefully shut down all background servers.
 
 ## 3. Immediate Verification
 1. Open the dashboard at `http://localhost:3000`.

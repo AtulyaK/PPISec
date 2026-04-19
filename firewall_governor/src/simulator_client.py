@@ -69,6 +69,8 @@ class SceneObject:
     position:  List[float]      # [x, y, z] in meters
     color:     List[float]      # [r, g, b] 0.0–1.0
     label:     str              # human-readable name shown in VLM context
+    model:     Optional[str] = None # GLB model path
+    scale:     float = 1.0
     is_held:   bool = False
     is_target: bool = False     # currently highlighted as pick/place target
 
@@ -155,6 +157,8 @@ class VirtualRobotState:
                     "position": obj.position,
                     "color":    obj.color,
                     "label":    obj.label,
+                    "model":    obj.model,
+                    "scale":    obj.scale,
                     "is_held":  obj.is_held,
                     "is_target": obj.is_target,
                 }
@@ -186,9 +190,12 @@ class SimulatorClient:
     def __init__(self):
         self.state = VirtualRobotState()
         # Callback registered by main.py to push state to WebSocket clients.
-        # Signature: callback(state_dict: dict) -> None
-        # main.py wraps this in asyncio.create_task() to not block dispatch_action().
         self._broadcast_callback: Optional[Callable[[Dict[str, Any]], None]] = None
+        
+        # Fast mode: bypasses sleep delays for rapid local testing/debugging.
+        # Enabled via FAST_SIM environment variable.
+        import os
+        self.fast_mode = os.getenv("FAST_SIM", "false").lower() == "true"
 
     def register_broadcast_callback(self, callback: Callable[[Dict[str, Any]], None]):
         """
@@ -208,6 +215,11 @@ class SimulatorClient:
         """
         if self._broadcast_callback:
             self._broadcast_callback(self.state.to_dict())
+
+    async def _sleep(self, seconds: float):
+        """Helper to sleep only if not in fast_mode."""
+        if not self.fast_mode:
+            await asyncio.sleep(seconds)
 
     def set_scenario(self, scene_objects: List[SceneObject]):
         """
@@ -257,7 +269,7 @@ class SimulatorClient:
         delay to make the timeline feel realistic, then broadcast the initial state.
         """
         logger.info("[SimulatorClient] Virtual robot initializing...")
-        await asyncio.sleep(0.3)
+        await self._sleep(0.3)
         self._broadcast()   # Push the initial (home) state to Agent Glass
         logger.info("[SimulatorClient] Virtual robot ready.")
 
@@ -322,7 +334,7 @@ class SimulatorClient:
                     f"[SimulatorClient] Unknown action '{action}' — "
                     f"simulating 1s pause."
                 )
-                await asyncio.sleep(1.0)
+                await self._sleep(1.0)
 
             return True
 
@@ -391,7 +403,7 @@ class SimulatorClient:
         self._broadcast()
 
         # Step 6: wait for the travel
-        await asyncio.sleep(delay)
+        await self._sleep(delay)
 
         # Step 7 & 8: arrive at target
         self.state.base_x = target_x
@@ -419,11 +431,23 @@ class SimulatorClient:
              Record state.held_object = obj.id.
           8. Broadcast updated scene with object flagged as held.
         """
-        # Phase 1: navigate to the pick location
-        self.state.is_navigating = True
-        self._broadcast()
-        await self._do_navigate(intent)
-        self.state.is_navigating = False
+        # Phase 1: navigate to the pick location (or just turn if in fast_mode)
+        if self.fast_mode:
+            # Short-circuit: face the object but don't move the base
+            target_x = intent.coordinates.get("x", 0.0)
+            target_y = intent.coordinates.get("y", 0.0)
+            dx = target_x - self.state.base_x
+            dy = target_y - self.state.base_y
+            if abs(dx) > 0.01 or abs(dy) > 0.01:
+                heading = math.degrees(math.atan2(dx, dy)) % 360
+                self.state.base_heading = heading
+            logger.info(f"[SimulatorClient] SHORT-CIRCUIT: Facing object at ({target_x}, {target_y}), heading={self.state.base_heading:.1f}")
+            self._broadcast()
+        else:
+            self.state.is_navigating = True
+            self._broadcast()
+            await self._do_navigate(intent)
+            self.state.is_navigating = False
 
         # Phase 2 & 3: arm sequence
         self.state.is_arm_moving = True
@@ -433,28 +457,38 @@ class SimulatorClient:
         self.state.arm_extended = 0.8
         self.state.arm_z = intent.coordinates.get("z") or 1.0
         self._broadcast()
-        await asyncio.sleep(ARM_EXTEND_S)
+        await self._sleep(ARM_EXTEND_S)
 
         # Open gripper (approach with open hand)
         self.state.gripper_open = True
         self._broadcast()
-        await asyncio.sleep(ARM_GRIP_S)
+        await self._sleep(ARM_GRIP_S)
 
         # Close gripper (grip the object)
         self.state.gripper_open = False
         self._broadcast()
-        await asyncio.sleep(ARM_GRIP_S)
+        await self._sleep(ARM_GRIP_S)
 
         # Retract to carrying height
         self.state.arm_extended = 0.3
         self.state.arm_z = 1.4   # Carry height (above obstacles)
         self._broadcast()
-        await asyncio.sleep(ARM_RETRACT_S)
+        await self._sleep(ARM_RETRACT_S)
 
         # Update the scene object's state to reflect it's now held
         target_lower = intent.target.lower()
+        # Resilience: also check singular version if target ends in 's'
+        target_singular = target_lower[:-1] if target_lower.endswith('s') else target_lower
+
         for obj in self.state.scene_objects:
-            if target_lower in obj.label.lower() or target_lower in obj.id.lower():
+            obj_label = obj.label.lower()
+            obj_id    = obj.id.lower()
+            
+            # Match if target (or its singular root) is found in label or id
+            match = (target_lower in obj_label or target_lower in obj_id or
+                     target_singular in obj_label or target_singular in obj_id)
+            
+            if match:
                 obj.is_held       = True
                 obj.position      = [self.state.base_x, self.state.base_y, self.state.arm_z]
                 self.state.held_object = obj.id
@@ -488,11 +522,23 @@ class SimulatorClient:
           6. Retract arm (arm_extended = 0.0, arm_z = 1.2), broadcast, sleep ARM_RETRACT_S.
           7. Clear is_arm_moving flag, broadcast.
         """
-        # Phase 1: navigate to place location
-        self.state.is_navigating = True
-        self._broadcast()
-        await self._do_navigate(intent)
-        self.state.is_navigating = False
+        # Phase 1: navigate to place location (or just turn if in fast_mode)
+        if self.fast_mode:
+            # Short-circuit: face the place location but don't move the base
+            target_x = intent.coordinates.get("x", 0.0)
+            target_y = intent.coordinates.get("y", 0.0)
+            dx = target_x - self.state.base_x
+            dy = target_y - self.state.base_y
+            if abs(dx) > 0.01 or abs(dy) > 0.01:
+                heading = math.degrees(math.atan2(dx, dy)) % 360
+                self.state.base_heading = heading
+            logger.info(f"[SimulatorClient] SHORT-CIRCUIT: Facing place target at ({target_x}, {target_y}), heading={self.state.base_heading:.1f}")
+            self._broadcast()
+        else:
+            self.state.is_navigating = True
+            self._broadcast()
+            await self._do_navigate(intent)
+            self.state.is_navigating = False
 
         # Phase 2+: arm sequence
         self.state.is_arm_moving = True
@@ -502,12 +548,12 @@ class SimulatorClient:
         self.state.arm_extended = 0.8
         self.state.arm_z = intent.coordinates.get("z") or 0.9
         self._broadcast()
-        await asyncio.sleep(ARM_EXTEND_S)
+        await self._sleep(ARM_EXTEND_S)
 
         # Release the object
         self.state.gripper_open = True
         self._broadcast()
-        await asyncio.sleep(ARM_GRIP_S)
+        await self._sleep(ARM_GRIP_S)
 
         # Update the held object's position in the scene to where it was placed
         if self.state.held_object:
@@ -530,7 +576,7 @@ class SimulatorClient:
         self.state.arm_extended = 0.0
         self.state.arm_z        = 1.2
         self._broadcast()
-        await asyncio.sleep(ARM_RETRACT_S)
+        await self._sleep(ARM_RETRACT_S)
 
         self.state.is_arm_moving = False
         self._broadcast()
@@ -569,11 +615,11 @@ class SimulatorClient:
         self.state.is_arm_moving = True
         self.state.arm_extended  = 0.8
         self._broadcast()
-        await asyncio.sleep(ARM_EXTEND_S)
+        await self._sleep(ARM_EXTEND_S)
 
         self.state.gripper_open = True
         self._broadcast()
-        await asyncio.sleep(ARM_GRIP_S)
+        await self._sleep(ARM_GRIP_S)
 
         # Remove disposed object from scene entirely (it's been disposed of)
         if self.state.held_object:
@@ -593,7 +639,7 @@ class SimulatorClient:
         self.state.arm_z         = 1.2
         self.state.is_arm_moving = False
         self._broadcast()
-        await asyncio.sleep(ARM_RETRACT_S)
+        await self._sleep(ARM_RETRACT_S)
 
     async def _do_stop(self, intent: IntentPacket):
         """
@@ -616,7 +662,7 @@ class SimulatorClient:
         self.state.is_navigating = False
         self.state.is_arm_moving = False
         self._broadcast()
-        await asyncio.sleep(0.1)
+        await self._sleep(0.1)
 
     async def _do_drop(self, intent: IntentPacket):
         """
@@ -649,7 +695,7 @@ class SimulatorClient:
             self.state.held_object = None
 
         self._broadcast()
-        await asyncio.sleep(0.2)
+        await self._sleep(0.2)
 
     async def _do_extend_arm(self, intent: IntentPacket):
         """
@@ -665,7 +711,7 @@ class SimulatorClient:
         self.state.arm_extended = min(1.0, intent.coordinates.get("x", 0.0) / 0.6)
         self.state.arm_z        = intent.coordinates.get("z") or 1.2
         self._broadcast()
-        await asyncio.sleep(ARM_EXTEND_S)
+        await self._sleep(ARM_EXTEND_S)
 
     async def _do_retract_arm(self, intent: IntentPacket):
         """
@@ -679,4 +725,4 @@ class SimulatorClient:
         self.state.arm_extended = 0.0
         self.state.arm_z        = 1.2
         self._broadcast()
-        await asyncio.sleep(ARM_RETRACT_S)
+        await self._sleep(ARM_RETRACT_S)
