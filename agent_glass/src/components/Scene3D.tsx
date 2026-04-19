@@ -1,12 +1,13 @@
 'use client'
  
-import { useRef, useMemo, useState, useEffect } from 'react'
+import { useRef, useMemo, useState, useEffect, Suspense } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Grid, Environment, Float, ContactShadows, Sparkles, PerspectiveCamera } from '@react-three/drei'
+import { OrbitControls, Grid, Environment, Float, ContactShadows, Sparkles, PerspectiveCamera, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { useFirewallStore, ArmState } from '../store/firewall'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Target, Navigation, Box, Video, Cpu, Activity, ShieldAlert, Zap, Layers, RotateCcw } from 'lucide-react'
+import scenariosData from '../../public/assets/config/scenarios.json'
 
 declare global {
   interface Window {
@@ -134,6 +135,43 @@ function Gripper({ open, material }: { open: boolean, material: THREE.Material }
   )
 }
  
+// ─── Native Object Loaders ───────────────────────────────────────────────────
+function DynamicObject({ url, position, rotation, scale, ...props }: any) {
+  const { scene } = useGLTF(url)
+  const clonedScene = useMemo(() => scene.clone(), [scene])
+  return (
+    <group position={position} rotation={rotation || [0, 0, 0]} scale={scale} {...props}>
+      <primitive object={clonedScene} castShadow receiveShadow />
+    </group>
+  )
+}
+
+function ScenarioEnvironment() {
+  const scenario = scenariosData.scenarios[0]
+  return (
+    <group>
+      {/* Human Base Mesh */}
+      <DynamicObject 
+        url={`/assets/objects/${scenario.human.model}`} 
+        position={scenario.human.position} 
+        rotation={scenario.human.rotation} 
+        scale={scenario.human.scale} 
+      />
+      {/* Target Interaction Objects */}
+      {scenario.objects.map((obj, i) => (
+        <DynamicObject 
+          key={i} 
+          url={`/assets/objects/${obj.model}`} 
+          position={obj.position} 
+          scale={obj.scale} 
+        />
+      ))}
+      <DynamicObject url="/assets/objects/crate.glb" position={[-2, 0, -1]} scale={0.4} />
+    </group>
+  )
+}
+
+
 // ─── Robotic Arm Visual ───────────────────────────────────────────────────────
 function RobotAssembly({ state, color, isGhost = false }: { state: ArmState, color: string, isGhost?: boolean }) {
   const materials = useArmMaterials(color, isGhost)
@@ -333,6 +371,10 @@ export default function Scene3D() {
           <ContactShadows opacity={0.6} scale={20} blur={2.4} far={10} resolution={512} color="#000000" />
         </group>
  
+        <Suspense fallback={null}>
+          <ScenarioEnvironment />
+        </Suspense>
+
         <RobotAssembly state={armState} color={mainColor} />
         
         {proposedArmState && lastDecision !== 'PASS' && (
