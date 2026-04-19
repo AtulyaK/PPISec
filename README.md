@@ -102,6 +102,7 @@ npm run dev
 
 Detailed documentation is available in the [`/docs`](./docs) folder:
 
+- 🏅 **[COMPREHENSIVE_VLA_VULNERABILITY_STUDY.md](./docs/COMPREHENSIVE_VLA_VULNERABILITY_STUDY.md)**: Extensively charts VLA failure rates against empirical Physical Injections.
 - **[QUICKSTART.md](./docs/QUICKSTART.md)**: Get running in under 10 minutes.
 - **[LOCAL_TESTING.md](./docs/LOCAL_TESTING.md)**: Full scale simulation test guide.
 - **[ON_DEVICE_VLA.md](./docs/ON_DEVICE_VLA.md)**: Guide for running real AI models locally on M2.
