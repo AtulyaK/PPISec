@@ -196,12 +196,12 @@ function RobotAssembly({ state, color, isGhost = false }: { state: ArmState, col
         <DynamicObject 
           url={`/assets/robots/${scenario.robot_model}`} 
           scale={scenario.robot_scale} 
-          position={[0, 0, 0]}
+          position={[0, scenario.robot_y_offset || 0, 0]}
         />
       </Suspense>
       {/* If ghost mode is active, we render an abstract bounding volume to show intent */}
       {isGhost && (
-        <mesh position={[0, scenario.robot_scale / 2, 0]}>
+        <mesh position={[0, (scenario.robot_y_offset || 0), 0]}>
           <cylinderGeometry args={[scenario.robot_scale * 0.4, scenario.robot_scale * 0.4, scenario.robot_scale, 16]} />
           <meshPhysicalMaterial 
             color="#ef4444" 
