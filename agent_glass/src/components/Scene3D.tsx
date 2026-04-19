@@ -166,7 +166,6 @@ function ScenarioEnvironment() {
           scale={obj.scale}
         />
       ))}
-      <DynamicObject url="/assets/objects/crate.glb" position={[-2, 0, -1]} scale={0.4} />
     </group>
   )
 }
