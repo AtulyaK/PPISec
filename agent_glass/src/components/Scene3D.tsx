@@ -173,45 +173,46 @@ function ScenarioEnvironment() {
 
 // ─── Robotic Arm Visual ───────────────────────────────────────────────────────
 function RobotAssembly({ state, color, isGhost = false }: { state: ArmState, color: string, isGhost?: boolean }) {
-  const materials = useArmMaterials(color, isGhost)
   const robotRef = useRef<THREE.Group>(null)
-  const effectorRef = useRef<THREE.Group>(null)
-
-  const current = useRef({ x: state.base_x, y: state.base_y, h: state.base_heading, ext: state.arm_extended, z: state.arm_z })
+  const current = useRef({ x: state.base_x, y: state.base_y, h: state.base_heading })
+  const scenario = scenariosData.scenarios[0]
 
   useFrame((_, delta) => {
     const lerpSpeed = 5.0
     current.current.x = THREE.MathUtils.lerp(current.current.x, state.base_x, delta * lerpSpeed)
     current.current.y = THREE.MathUtils.lerp(current.current.y, state.base_y, delta * lerpSpeed)
     current.current.h = THREE.MathUtils.lerp(current.current.h, state.base_heading, delta * lerpSpeed)
-    current.current.ext = THREE.MathUtils.lerp(current.current.ext, state.arm_extended, delta * lerpSpeed)
-    current.current.z = THREE.MathUtils.lerp(current.current.z, state.arm_z, delta * lerpSpeed)
 
     if (robotRef.current) {
-      robotRef.current.position.set(toScene(current.current.x), 0, toScene(current.current.y))
+      robotRef.current.position.set(current.current.x, 0, current.current.y)
       robotRef.current.rotation.y = THREE.MathUtils.degToRad(current.current.h)
-    }
-
-    if (effectorRef.current) {
-      effectorRef.current.position.set(0, toScene(current.current.z), toScene(current.current.ext))
     }
   })
 
+  // Apply ghost styling if needed, otherwise render raw model
   return (
     <group ref={robotRef}>
-      <mesh position={[0, 0.2, 0]} receiveShadow castShadow material={materials.base}>
-        <boxGeometry args={[0.6, 0.35, 0.8]} />
-      </mesh>
-
-      <group position={[0, 0.4, 0.3]} ref={effectorRef}>
-        <Joint material={materials.joint} />
-        <group rotation={[Math.PI / 2, 0, 0]}>
-          <ArmLink length={0.4} material={materials.frame} />
-          <group position={[0, 0.2, 0]}>
-            <Gripper open={state.gripper_open} material={materials.gripper} />
-          </group>
-        </group>
-      </group>
+      <Suspense fallback={null}>
+        <DynamicObject 
+          url={`/assets/robots/${scenario.robot_model}`} 
+          scale={scenario.robot_scale} 
+          position={[0, 0, 0]}
+        />
+      </Suspense>
+      {/* If ghost mode is active, we render an abstract bounding volume to show intent */}
+      {isGhost && (
+        <mesh position={[0, scenario.robot_scale / 2, 0]}>
+          <cylinderGeometry args={[scenario.robot_scale * 0.4, scenario.robot_scale * 0.4, scenario.robot_scale, 16]} />
+          <meshPhysicalMaterial 
+            color="#ef4444" 
+            transparent 
+            opacity={0.3} 
+            emissive="#ef4444" 
+            emissiveIntensity={0.5} 
+            wireframe
+          />
+        </mesh>
+      )}
     </group>
   )
 }
