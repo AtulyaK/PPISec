@@ -2,7 +2,7 @@
 
 import { useRef, useMemo, useState, useEffect, Suspense } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Grid, Environment, Float, ContactShadows, Sparkles, PerspectiveCamera, useGLTF } from '@react-three/drei'
+import { OrbitControls, Grid, Environment, Float, ContactShadows, Sparkles, PerspectiveCamera, useGLTF, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import { useFirewallStore, ArmState } from '../store/firewall'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -136,12 +136,21 @@ function Gripper({ open, material }: { open: boolean, material: THREE.Material }
 }
 
 // ─── Native Object Loaders ───────────────────────────────────────────────────
-function DynamicObject({ url, position, rotation, scale, ...props }: { url: string, position?: any, rotation?: any, scale?: any, [key: string]: any }) {
+function DynamicObject({ url, position, rotation, scale, label, ...props }: { url: string, position?: any, rotation?: any, scale?: any, label?: string, [key: string]: any }) {
   const { scene } = useGLTF(url) as any
   const clonedScene = useMemo(() => scene.clone(), [scene])
   return (
     <group position={position} rotation={rotation || [0, 0, 0]} scale={scale} {...props}>
       <primitive object={clonedScene} castShadow receiveShadow />
+      {label && (
+        <Html position={[0, 1.2, 0]} center distanceFactor={10} zIndexRange={[100, 0]}>
+          <div className="px-2 py-0.5 bg-slate-900/90 border border-slate-700/50 backdrop-blur-md rounded text-[9px] font-mono font-bold text-cyan-400 whitespace-nowrap tracking-wider shadow-2xl flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+            {label}
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-px h-8 bg-gradient-to-b from-cyan-500/50 to-transparent pointer-events-none" />
+          </div>
+        </Html>
+      )}
     </group>
   )
 }
@@ -156,6 +165,7 @@ function ScenarioEnvironment() {
         position={scenario.human.position}
         rotation={scenario.human.rotation}
         scale={scenario.human.scale}
+        label={scenario.human.label}
       />
       {/* Target Interaction Objects */}
       {scenario.objects.map((obj, i) => (
@@ -164,6 +174,7 @@ function ScenarioEnvironment() {
           url={`/assets/objects/${obj.model}`}
           position={obj.position}
           scale={obj.scale}
+          label={obj.label}
         />
       ))}
     </group>
