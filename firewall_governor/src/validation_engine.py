@@ -214,6 +214,10 @@ class ValidationEngine:
             )
 
         # Check B: Confidence threshold gate
+        # Programmatic commands are deterministic; bypass probabilistic confidence threshold.
+        if intent.source_modality == SourceModality.PROGRAMMATIC:
+            return None
+
         # Higher threshold for visual text injection (even if somehow past Check A).
         threshold = (
             self.config.mcr_visual_injection_threshold
