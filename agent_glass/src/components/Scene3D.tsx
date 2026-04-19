@@ -143,22 +143,65 @@ function DynamicObject({ url, position, rotation, scale, label, ...props }: { ur
     <group position={position} rotation={rotation || [0, 0, 0]} scale={scale} {...props}>
       <primitive object={clonedScene} castShadow receiveShadow />
       {label && (
-        <Html position={[0, 1.2, 0]} center distanceFactor={10} zIndexRange={[100, 0]}>
-          <div className="px-2 py-0.5 bg-slate-900/90 border border-slate-700/50 backdrop-blur-md rounded text-[9px] font-mono font-bold text-cyan-400 whitespace-nowrap tracking-wider shadow-2xl flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-            {label}
-            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-px h-8 bg-gradient-to-b from-cyan-500/50 to-transparent pointer-events-none" />
-          </div>
+        <Html position={[0, 1.4, 0]} center distanceFactor={10} zIndexRange={[100, 0]}>
+          <motion.div 
+            initial={{ opacity: 0, y: 10, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="flex flex-col items-center gap-1"
+          >
+            <div className="px-3 py-1 bg-slate-900/40 border border-white/20 backdrop-blur-xl rounded-full text-[10px] font-black text-white whitespace-nowrap tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.1)] flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_#22d3ee] animate-pulse" />
+              {label.toUpperCase()}
+            </div>
+            <div className="w-[1px] h-6 bg-gradient-to-t from-transparent via-white/20 to-transparent" />
+          </motion.div>
         </Html>
       )}
     </group>
   )
 }
 
+function TrojanSign({ text }: { text: string }) {
+  return (
+    <group position={[-1.5, 0, 0.5]} rotation={[0, 0.4, 0]}>
+      {/* Physical Sign Post */}
+      <mesh position={[0, 0.5, 0]}>
+        <cylinderGeometry args={[0.02, 0.02, 1, 16]} />
+        <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.2} />
+      </mesh>
+      {/* Sign Plate */}
+      <mesh position={[0, 1, 0]}>
+        <boxGeometry args={[0.8, 0.4, 0.02]} />
+        <meshStandardMaterial color="#0f172a" metalness={0.5} roughness={0.5} />
+      </mesh>
+      {/* Glowing Border */}
+      <mesh position={[0, 1, 0.011]}>
+        <planeGeometry args={[0.82, 0.42]} />
+        <meshBasicMaterial color="#ef4444" transparent opacity={0.2} />
+      </mesh>
+      {/* Adversarial Text Label */}
+      <Html position={[0, 1, 0.02]} center transform distanceFactor={1.5} rotation={[0, 0, 0]}>
+        <div className="px-4 py-2 bg-red-600/10 border-2 border-red-500/50 rounded flex flex-col items-center gap-1 w-64 select-none">
+          <span className="text-[10px] font-black text-red-500 uppercase tracking-tighter">PHYSICAL_SEC_OVERRIDE</span>
+          <p className="text-xs font-black text-white text-center leading-tight uppercase tracking-tight italic">
+            {text}
+          </p>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
 function ScenarioEnvironment() {
-  const scenario = scenariosData.scenarios[0]
+  const { activeScenario, trojanConfig } = useFirewallStore()
+  const scenario = activeScenario
   return (
     <group>
+      {/* Background environment if specified */}
+      {scenario.background_model && (
+        <DynamicObject url={`/assets/objects/${scenario.background_model}`} position={[0, 0, 0]} scale={2} />
+      )}
+      
       {/* Human Base Mesh */}
       <DynamicObject
         url={`/assets/objects/${scenario.human.model}`}
@@ -177,6 +220,9 @@ function ScenarioEnvironment() {
           label={obj.label}
         />
       ))}
+      
+      {/* Conditionally render the Trojan Sign */}
+      {trojanConfig.active && <TrojanSign text={trojanConfig.text} />}
     </group>
   )
 }
@@ -186,7 +232,8 @@ function ScenarioEnvironment() {
 function RobotAssembly({ state, color, isGhost = false }: { state: ArmState, color: string, isGhost?: boolean }) {
   const robotRef = useRef<THREE.Group>(null)
   const current = useRef({ x: state.base_x, y: state.base_y, h: state.base_heading })
-  const scenario = scenariosData.scenarios[0]
+  const { activeScenario } = useFirewallStore()
+  const scenario = activeScenario
 
   useFrame((_, delta) => {
     const lerpSpeed = 5.0
